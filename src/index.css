@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+}
+
+.bg-hero {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(239, 107, 74, 0.18), transparent 42%),
+    radial-gradient(circle at 88% 18%, rgba(43, 108, 176, 0.2), transparent 40%),
+    linear-gradient(180deg, #ffffff 0%, #f7f0e7 45%, #efe3d4 100%);
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.pulse-ring {
+  position: relative;
+}
+
+.pulse-ring::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: inherit;
+  border: 1px solid rgba(43, 108, 176, 0.2);
+  opacity: 0;
+  animation: pulse 2.4s ease-out infinite;
+}
+
+.fade-in {
+  animation: fadeIn 0.6s ease-out both;
+}
+
+.rise-in {
+  animation: riseIn 0.7s ease-out both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+  70% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}
