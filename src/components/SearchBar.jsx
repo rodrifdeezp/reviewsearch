@@ -38,7 +38,7 @@ export default function SearchBar({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={disabled || isGeoActive}
+          disabled={disabled}
           className="rounded-2xl bg-tide-600 px-6 py-3 text-base font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:bg-tide-500 disabled:cursor-not-allowed disabled:bg-ink-700/40"
         >
           {isLoading ? "Buscando..." : "Buscar"}

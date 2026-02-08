@@ -25,26 +25,30 @@ export default function App() {
   const [meta, setMeta] = useState(null);
   const { favorites, toggleFavorite } = useFavorites();
 
+  const hasManualLocation = location.trim().length > 2 && !useGeolocation;
+  const hasGeoLocation = useGeolocation && coords;
   const canSearch =
-    location.trim().length > 2 && status !== "loading" && geoStatus !== "loading";
+    (hasManualLocation || hasGeoLocation) && status !== "loading" && geoStatus !== "loading";
 
-  const handleSearch = async ({ useCoords = false, coordsOverride } = {}) => {
-    if (!useCoords && !canSearch) return;
+  const handleSearch = async ({ useCoords, coordsOverride } = {}) => {
+    const shouldUseCoords = typeof useCoords === "boolean" ? useCoords : useGeolocation;
+    if (!shouldUseCoords && !canSearch) return;
+    if (shouldUseCoords && !coords && !coordsOverride) return;
     setStatus("loading");
     setError("");
 
     try {
       const effectiveCoords = coordsOverride || coords;
       const response = await fetchRestaurants({
-        location: useCoords ? "" : location.trim(),
-        latitude: useCoords ? effectiveCoords?.latitude : undefined,
-        longitude: useCoords ? effectiveCoords?.longitude : undefined,
+        location: shouldUseCoords ? "" : location.trim(),
+        latitude: shouldUseCoords ? effectiveCoords?.latitude : undefined,
+        longitude: shouldUseCoords ? effectiveCoords?.longitude : undefined,
         radius,
         filters,
       });
       setResults(response.results);
       setMeta(response.meta);
-      if (useCoords) {
+      if (shouldUseCoords) {
         setLocation(response.meta?.displayName || "Ubicación actual");
       }
       setStatus("success");
@@ -75,8 +79,7 @@ export default function App() {
         setCoords(nextCoords);
         setGeoStatus("success");
         setLocation("Ubicación actual");
-        handleSearch({ useCoords: true, coordsOverride: nextCoords });
-        setUseGeolocation(false);
+        setUseGeolocation(true);
       },
       (geoErr) => {
         setGeoStatus(geoErr.code === 1 ? "denied" : "error");
@@ -131,7 +134,11 @@ export default function App() {
           <div className="flex flex-col gap-6">
             <SearchBar
               location={location}
-              onChange={setLocation}
+              onChange={(value) => {
+                setLocation(value);
+                setUseGeolocation(false);
+                setCoords(null);
+              }}
               onSubmit={handleSearch}
               disabled={!canSearch}
               status={status}
