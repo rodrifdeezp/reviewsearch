@@ -1,6 +1,6 @@
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const RATE_LIMIT_MS = 1100;
-const MAX_RESULTS = 20;
+const MAX_RESULTS = 50;
 
 const cache = new Map();
 let lastRequestAt = 0;
@@ -110,6 +110,38 @@ async function fetchOverpass(query) {
   }
 
   throw new Error(lastError);
+}
+
+async function fetchOverpassWithFallback({ lat, lon, radius }) {
+  const steps = [radius, Math.max(Math.floor(radius * 0.7), 600), 600];
+  let lastError = "Overpass request failed.";
+
+  for (const stepRadius of steps) {
+    const overpassQuery = `
+      [out:json][timeout:25];
+      (
+        node["amenity"~"restaurant|fast_food"](around:${stepRadius},${lat},${lon});
+        way["amenity"~"restaurant|fast_food"](around:${stepRadius},${lat},${lon});
+        relation["amenity"~"restaurant|fast_food"](around:${stepRadius},${lat},${lon});
+
+        node["shop"~"fast_food|burger"](around:${stepRadius},${lat},${lon});
+        way["shop"~"fast_food|burger"](around:${stepRadius},${lat},${lon});
+        relation["shop"~"fast_food|burger"](around:${stepRadius},${lat},${lon});
+      );
+      out tags center;
+    `;
+
+    try {
+      const data = await fetchOverpass(overpassQuery);
+      return { data, usedRadius: stepRadius };
+    } catch (error) {
+      lastError = error.message || "Overpass request failed.";
+    }
+  }
+
+  const err = new Error(lastError);
+  err.code = "OVERPASS_UNAVAILABLE";
+  throw err;
 }
 
 function buildCacheKey({ location, latitude, longitude, radius, filters }) {
@@ -261,6 +293,7 @@ exports.handler = async (event) => {
   const latitude = Number(payload.latitude);
   const longitude = Number(payload.longitude);
   const filters = payload.filters || {};
+  const debug = Boolean(payload.debug);
 
   const hasCoords = Number.isFinite(latitude) && Number.isFinite(longitude);
 
@@ -276,7 +309,7 @@ exports.handler = async (event) => {
     }
   }
 
-  const safeRadius = Math.min(Math.max(radius, 300), 3000);
+  const safeRadius = Math.max(radius, 300);
 
   const shouldCache = !hasCoords;
   const cacheKey = buildCacheKey({
@@ -345,18 +378,11 @@ exports.handler = async (event) => {
     const cuisineFilter = normalizeCuisineFilter(filters.cuisine);
 
     await throttle();
-    const overpassQuery = `
-      [out:json][timeout:15];
-      (
-        node["amenity"="restaurant"](around:${safeRadius},${lat},${lon});
-        node["amenity"="fast_food"](around:${safeRadius},${lat},${lon});
-        way["amenity"="restaurant"](around:${safeRadius},${lat},${lon});
-        way["amenity"="fast_food"](around:${safeRadius},${lat},${lon});
-      );
-      out center tags;
-    `;
-
-    const overpassData = await fetchOverpass(overpassQuery);
+    const { data: overpassData, usedRadius } = await fetchOverpassWithFallback({
+      lat,
+      lon,
+      radius: safeRadius,
+    });
     const elements = Array.isArray(overpassData.elements)
       ? overpassData.elements
       : [];
@@ -365,13 +391,15 @@ exports.handler = async (event) => {
       .map(normalizeElement)
       .filter((item) => item.lat && item.lon);
 
-    const filtered = normalized.filter((item) => {
-      if (filters.hasWebsite && !item.website) return false;
-      if (filters.hasOpeningHours && !item.openingHours) return false;
-      if (!matchesCuisine(item, cuisineFilter)) return false;
-      if (filters.burgerOnly && !item.isBurger) return false;
-      return true;
-    });
+    const filtered = debug
+      ? normalized
+      : normalized.filter((item) => {
+          if (filters.hasWebsite && !item.website) return false;
+          if (filters.hasOpeningHours && !item.openingHours) return false;
+          if (!matchesCuisine(item, cuisineFilter)) return false;
+          if (filters.burgerOnly && !item.isBurger) return false;
+          return true;
+        });
 
     const sorted = filtered.sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
@@ -395,9 +423,12 @@ exports.handler = async (event) => {
         displayName,
         lat,
         lon,
-        radius: safeRadius,
+        radius: usedRadius ?? safeRadius,
         total: results.length,
         cache: shouldCache ? "miss" : "bypass",
+        debugNames: debug
+          ? sorted.slice(0, MAX_RESULTS).map((item) => item.name).filter(Boolean)
+          : undefined,
       },
       results,
     };
@@ -409,6 +440,14 @@ exports.handler = async (event) => {
     return { statusCode: 200, body: JSON.stringify(payloadResponse) };
   } catch (error) {
     console.error(error);
+    if (error.code === "OVERPASS_UNAVAILABLE") {
+      return {
+        statusCode: 503,
+        body: JSON.stringify({
+          message: "Overpass está saturado. Intenta de nuevo en unos minutos.",
+        }),
+      };
+    }
     return {
       statusCode: 500,
       body: JSON.stringify({
@@ -417,4 +456,3 @@ exports.handler = async (event) => {
     };
   }
 };
-
