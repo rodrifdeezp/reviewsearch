@@ -101,36 +101,24 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-hero text-ink-900">
-      <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 pb-20 pt-10 md:px-8">
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-16 pt-8 md:gap-10 md:px-8 md:pt-10">
         <header className="flex flex-col gap-6">
           <div className="flex flex-wrap items-center justify-between gap-6">
             <div className="fade-in">
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-tide-600">
                 Open Eats Finder
               </p>
-              <h1 className="mt-4 text-3xl font-semibold leading-tight md:text-5xl">
+              <h1 className="mt-3 text-3xl font-semibold leading-tight md:mt-4 md:text-5xl">
                 Descubre restaurantes con datos de OpenStreetMap.
               </h1>
               <p className="mt-4 max-w-2xl text-base text-ink-700 md:text-lg">
                 {subtitle}
               </p>
             </div>
-            <div className="glass pulse-ring rounded-3xl px-6 py-5 shadow-soft">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-700">
-                Datos abiertos
-              </p>
-              <p className="mt-2 text-sm text-ink-800">
-                Resultados basados en la información pública de OpenStreetMap.
-              </p>
-              <div className="mt-4 flex items-center gap-3 text-xs font-semibold text-ink-600">
-                <span className="rounded-full bg-ink-900/5 px-3 py-1">Sin cuentas</span>
-                <span className="rounded-full bg-ink-900/5 px-3 py-1">Sin tracking</span>
-              </div>
-            </div>
           </div>
         </header>
 
-        <section className="glass rise-in rounded-[28px] p-6 shadow-soft md:p-8">
+        <section className="glass rise-in rounded-[24px] p-5 shadow-soft md:p-8">
           <div className="flex flex-col gap-6">
             <SearchBar
               location={location}

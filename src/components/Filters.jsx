@@ -46,33 +46,21 @@ export default function Filters({ radius, onRadiusChange, filters, onFilterChang
     <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
       <div className="flex flex-1 flex-col gap-3">
         <label className="text-sm font-semibold text-ink-700" htmlFor="cuisine">
-          Cocina (opcional)
+          Cocina
         </label>
-        <input
+        <select
           id="cuisine"
           className="w-full rounded-2xl border border-ink-900/10 bg-white/90 px-4 py-3 text-base shadow-sm outline-none transition focus:border-tide-500 focus:ring-2 focus:ring-tide-500/20"
-          placeholder="Ej: mexican, sushi"
           value={filters.cuisine}
           onChange={(event) => updateFilter("cuisine", event.target.value)}
-          list="cuisine-list"
-        />
-        <datalist id="cuisine-list">
+        >
+          <option value="">Todas</option>
           {cuisineSuggestions.map((item) => (
-            <option key={item} value={item} />
-          ))}
-        </datalist>
-        <div className="flex flex-wrap gap-2 text-xs text-ink-600">
-          {cuisineSuggestions.map((item) => (
-            <button
-              key={item}
-              type="button"
-              onClick={() => updateFilter("cuisine", item)}
-              className="rounded-full border border-ink-900/10 bg-white/80 px-3 py-1 text-xs font-semibold text-ink-700 transition hover:-translate-y-0.5 hover:bg-white"
-            >
+            <option key={item} value={item}>
               {item.replace("_", " ")}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
       </div>
 
       <div className="flex flex-wrap gap-5">

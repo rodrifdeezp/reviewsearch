@@ -12,9 +12,8 @@ body {
 
 .bg-hero {
   background:
-    radial-gradient(circle at 12% 12%, rgba(239, 107, 74, 0.18), transparent 42%),
-    radial-gradient(circle at 88% 18%, rgba(43, 108, 176, 0.2), transparent 40%),
-    linear-gradient(180deg, #ffffff 0%, #f7f0e7 45%, #efe3d4 100%);
+    radial-gradient(circle at 15% 10%, rgba(239, 107, 74, 0.12), transparent 45%),
+    linear-gradient(180deg, #ffffff 0%, #f5efe6 55%, #efe3d4 100%);
 }
 
 .glass {
